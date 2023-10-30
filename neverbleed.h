@@ -117,8 +117,15 @@ typedef void (*neverbleed_cb)(int);
 int neverbleed_get_fd(neverbleed_t *nb);
 static size_t neverbleed_iobuf_size(neverbleed_iobuf_t *buf);
 void neverbleed_iobuf_dispose(neverbleed_iobuf_t *buf);
-void neverbleed_transaction_read(neverbleed_t *nb, neverbleed_iobuf_t *buf);
-void neverbleed_transaction_write(neverbleed_t *nb, neverbleed_iobuf_t *buf);
+
+/**
+ * read a transaction, returns -1 on failure, errno may be set
+ */
+int neverbleed_transaction_read(neverbleed_t *nb, neverbleed_iobuf_t *buf);
+/**
+ * write a transaction, returns -1 on failure, errno may be set
+ */
+int neverbleed_transaction_write(neverbleed_t *nb, neverbleed_iobuf_t *buf);
 
 /**
  * if set to a non-zero value, RSA operations are offloaded

@@ -389,9 +389,13 @@ void neverbleed_iobuf_dispose(neverbleed_iobuf_t *buf)
     iobuf_dispose(buf);
 }
 
+static int do_iobuf_transaction_write(neverbleed_iobuf_t *buf, struct st_neverbleed_thread_data_t *thdata) {
+    return iobuf_write(buf, thdata->fd);
+}
+
 static void iobuf_transaction_write(neverbleed_iobuf_t *buf, struct st_neverbleed_thread_data_t *thdata)
 {
-    if (iobuf_write(buf, thdata->fd) == -1) {
+    if (do_iobuf_transaction_write(buf, thdata) == -1) {
         if (errno != 0) {
             dief("write error (%d) %s", errno, strerror(errno));
         } else {
@@ -400,10 +404,15 @@ static void iobuf_transaction_write(neverbleed_iobuf_t *buf, struct st_neverblee
     }
 }
 
-static void iobuf_transaction_read(neverbleed_iobuf_t *buf, struct st_neverbleed_thread_data_t *thdata)
+static int do_iobuf_transaction_read(neverbleed_iobuf_t *buf, struct st_neverbleed_thread_data_t *thdata)
 {
     iobuf_dispose(buf);
-    if (iobuf_read(buf, thdata->fd) == -1) {
+    return iobuf_read(buf, thdata->fd);
+}
+
+static void iobuf_transaction_read(neverbleed_iobuf_t *buf, struct st_neverbleed_thread_data_t *thdata)
+{
+    if (do_iobuf_transaction_read(buf, thdata) == -1) {
         if (errno != 0) {
             dief("read error (%d) %s", errno, strerror(errno));
         } else {
@@ -527,16 +536,16 @@ int neverbleed_get_fd(neverbleed_t *nb)
     return thdata->fd;
 }
 
-void neverbleed_transaction_read(neverbleed_t *nb, neverbleed_iobuf_t *buf)
+int neverbleed_transaction_read(neverbleed_t *nb, neverbleed_iobuf_t *buf)
 {
     struct st_neverbleed_thread_data_t *thdata = get_thread_data(nb);
-    iobuf_transaction_read(buf, thdata);
+    return do_iobuf_transaction_read(buf, thdata);
 }
 
-void neverbleed_transaction_write(neverbleed_t *nb, neverbleed_iobuf_t *buf)
+int neverbleed_transaction_write(neverbleed_t *nb, neverbleed_iobuf_t *buf)
 {
     struct st_neverbleed_thread_data_t *thdata = get_thread_data(nb);
-    iobuf_transaction_write(buf, thdata);
+    return do_iobuf_transaction_write(buf, thdata);
 }
 
 static void do_exdata_free_callback(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx, long argl, void *argp)
